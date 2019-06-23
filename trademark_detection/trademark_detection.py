@@ -38,16 +38,6 @@ def divideImg(img, m, n):  # 分割成m行n列
             divide_image[i, j] = img_re[gy[i][j]:gy[i + 1][j + 1], gx[i][j]:gx[i + 1][j + 1]]
     return divide_image
 
-# ==============================================显示分块结果=============================================
-def display_blocks(divide_image):
-    m,n=divide_image.shape[0],divide_image.shape[1]
-    for i in range(m):
-        for j in range(n):
-            plt.subplot(m,n,i*n+j+1)
-            plt.imshow(divide_image[i,j,:])
-            plt.axis('off')
-            plt.title('block:'+str(i*n+j+1))
-
 # =============================================按金字塔分割图片===========================================
 def divideImg2Cells(img, mn):
     cells = divideImg(img, mn, mn)
@@ -75,7 +65,6 @@ def spmCalc(template, img, level=4, bin=[10]):
                     hist[i] = min(hist1[i], hist2[i])
                 # 统计l尺度下单个cell的match总数
                 hist_sum[x][y] = sum(hist)
-                #print(hist_sum)
         # 统计尺度l下的match总数
         L_l[l] = sum(hist_sum.reshape([pow(2, l)*pow(2, l), 1]))
         w[l] = 1/pow(2, (level-1)-l)
@@ -85,20 +74,16 @@ def spmCalc(template, img, level=4, bin=[10]):
     a = list(L_l)
     a.pop()
     a = np.array(a)
-    #print(a)
 
     b = list(L_l)
     b.pop(0)
     b = np.array(b)
-    #print(b)
 
     c = list(w)
     c.pop()
     w = np.array(c)
-    #print(w)
 
     k_L = L_l[level-1] + sum((a - b) * w.transpose())
-    #print(k_L)
 
     return k_L
 
@@ -117,15 +102,11 @@ if __name__ == "__main__":
     print("start detecting.....")
     for windows in sw:
         img_cord[x] = [windows[0], windows[1]]
-        #print(x)
-        #print(windows)
         match_rate[x] = spmCalc(template, windows[2], 4, [100])
         x += 1
-    #print("max rate:", max(match_rate))
+
     list_rate = match_rate.tolist()
     index = list_rate.index(max(list_rate))
-    #print("index:", index)
-    #print(img_cord[index])
 
     # 显示效果
     result = cv2.rectangle(starbucks_color,
@@ -134,4 +115,5 @@ if __name__ == "__main__":
                            (255, 0, 0), 2)
     cv2.imshow("result", result)
     cv2.waitKey(0)
+    cv2.imwrite("starbucks3_detect.jpg", result)
 
