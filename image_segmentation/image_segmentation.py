@@ -26,7 +26,6 @@ if __name__ == "__main__":
     data = np.float32(data.reshape(-1, 5))
     print("data shape:", data.shape)
 
-if True:
     # sklearn kmeans聚类
     # data = cv2.normalize(data, None, 0, 1, cv2.NORM_MINMAX)
     kmeans = KMeans(n_clusters=2)
@@ -66,18 +65,7 @@ if True:
     cv2.imshow("kmeans", dst)
     cv2.imshow("beach_cat", beach)
     cv2.waitKey(0)
+    cv2.imwrite("./kmeans_result.jpg", dst)
+    cv2.imwrite("./beach_cat.jpg", beach)
 
-else:
-    #OpenCV kmeans类聚
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    compactness, lables, centers = cv2.kmeans(data, 2, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-
-    centers = np.uint8(centers)
-    dst = centers[lables.flatten()].reshape(cols, rows)
-    dst = cv2.normalize(dst, None, 0, 255, cv2.NORM_MINMAX)
-
-    # 效果显示
-    cv2.imshow("color", cat)
-    cv2.imshow("kmeans", dst)
-    cv2.waitKey(0)
 
