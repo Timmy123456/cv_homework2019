@@ -5,6 +5,7 @@ from torchvision import datasets
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 import torch.nn as nn
+import torch.multiprocessing as mp
 
 # 定义对数据的预处理
 transform = transforms.Compose([
@@ -46,19 +47,12 @@ class classifier(nn.Module):
         x = self.fc2(x)
         return x
 
-
-if __name__ == "__main__":
-    #训练
-    print("init model")
-    model = classifier()
-    print(model)
-
+def train(model):
     # 定义损失函数和优化器
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
     # 训练模型
-    print("start to train")
     epochs = 10
     torch.set_num_threads(8)
     for e in range(epochs):
@@ -75,11 +69,30 @@ if __name__ == "__main__":
 
             # 更新参数
             optimizer.step()
+
             train_loss += loss.item() * data.size(0)  # loss.item()是平均损失，平均损失*batch_size=一次训练的损失
 
         train_loss = train_loss / len(trainloader.dataset)
 
         print('Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
+
+
+if __name__ == "__main__":
+    #训练
+    print("init model")
+    num_processes = 4
+    model = classifier()
+    print(model)
+    model.share_memory()
+    processes = []
+
+    for rank in range(num_processes):
+        p = mp.Process(target=train, args=(model,))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
 
     #验证集的效果
     class_correct = list(0. for i in range(10))
