@@ -6,6 +6,7 @@ import torchvision.transforms as transforms
 import torch.nn.functional as F
 import torch.nn as nn
 import torch.multiprocessing as mp
+import time
 
 # 定义对数据的预处理
 transform = transforms.Compose([
@@ -30,8 +31,8 @@ class classifier(nn.Module):
         super().__init__()
         '''输入为3*32*32，尺寸减半是因为池化层'''
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1)  # 输出为16*16*16
+        self.pool = nn.MaxPool2d(2, stride=2)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)  # 输出为32*8*8
-        self.pool = nn.MaxPool2d(2, 2)
         self.fc1 = nn.Linear(32 * 8 * 8, 512)
         self.fc2 = nn.Linear(512, 10)
         self.dropout = nn.Dropout(0.2)  # 防止过拟合
@@ -74,13 +75,15 @@ def train(model):
 
         train_loss = train_loss / len(trainloader.dataset)
 
-        print('Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
+        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
+            'Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
 
 
 if __name__ == "__main__":
     #训练
     print("init model")
-    num_processes = 4
+    # 在服务器上运行时使用16线程
+    num_processes = 16
     model = classifier()
     print(model)
     model.share_memory()
