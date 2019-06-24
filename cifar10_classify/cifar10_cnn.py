@@ -13,7 +13,7 @@ transform = transforms.Compose([
 ])
 
 trainset = datasets.CIFAR10(root='./data', train=True,
-                                        download=False, transform=transform)
+                                        download=True, transform=transform)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
 
@@ -51,19 +51,29 @@ if __name__ == "__main__":
     #训练
     print("init model")
     model = classifier()
+    print(model)
+
+    # 定义损失函数和优化器
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-    epochs = 10
 
+    # 训练模型
     print("start to train")
+    epochs = 10
+    torch.set_num_threads(8)
     for e in range(epochs):
         train_loss = 0
 
         for data, target in trainloader:
+            # 梯度清零
             optimizer.zero_grad()
+
+            # forward+backward
             output = model(data)
             loss = criterion(output, target)
             loss.backward()
+
+            # 更新参数
             optimizer.step()
             train_loss += loss.item() * data.size(0)  # loss.item()是平均损失，平均损失*batch_size=一次训练的损失
 
