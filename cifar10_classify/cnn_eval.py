@@ -38,5 +38,5 @@ with torch.no_grad():
             class_total[label] += 1
 
 for i in range(10):
-    logging.debug('Accuracy of %5s : %2d %%' % (
+    print('Accuracy of %5s : %2d %%' % (
         classes[i], 100 * class_correct[i] / class_total[i]))

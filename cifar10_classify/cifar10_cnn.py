@@ -115,7 +115,7 @@ if __name__ == "__main__":
     # 训练
     logging.debug("init model")
     # 在服务器上运行时使用16线程
-    num_processes = 1
+    num_processes = 16
     model = classifier()
     logging.info(model)
 
