@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import torch
 import torch.optim as optim
 from torchvision import datasets
@@ -7,6 +8,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import torch.multiprocessing as mp
 import time
+import logging
 
 # 定义对数据的预处理
 transform = transforms.Compose([
@@ -75,17 +77,22 @@ def train(model):
 
         train_loss = train_loss / len(trainloader.dataset)
 
-        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
-            'Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
+        logging.debug(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
+            ' Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
 
 
 if __name__ == "__main__":
-    #训练
-    print("init model")
+    # 打开log文件
+    now = time.strftime('%Y-%m-%d-%H_%M_%S', time.localtime(time.time()))
+    name = "log" + now + r".txt"
+    logging.basicConfig(filename=os.path.join(os.getcwd(), name), level=logging.DEBUG)
+
+    # 训练
+    logging.debug("init model")
     # 在服务器上运行时使用16线程
     num_processes = 16
     model = classifier()
-    print(model)
+    logging.info(model)
     model.share_memory()
     processes = []
 
@@ -96,6 +103,9 @@ if __name__ == "__main__":
 
     for p in processes:
         p.join()
+
+    # 保存模型
+    torch.save(model.state_dict(), 'cnn_model.pkl')
 
     #验证集的效果
     class_correct = list(0. for i in range(10))
@@ -113,5 +123,5 @@ if __name__ == "__main__":
 
 
     for i in range(10):
-        print('Accuracy of %5s : %2d %%' % (
+        logging.debug('Accuracy of %5s : %2d %%' % (
             classes[i], 100 * class_correct[i] / class_total[i]))
