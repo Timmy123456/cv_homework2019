@@ -25,21 +25,32 @@ testset = datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                          shuffle=False, num_workers=2)
-classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+classes = ('plane' , 'car' , 'bird' , 'cat' , 'deer' , 'dog' , 'frog' , 'horse' , 'ship' , 'truck')
 
 # 定义cnn网络
 class classifier(nn.Module):
     def __init__(self):
         super().__init__()
         '''输入为3*32*32，尺寸减半是因为池化层'''
+        '''
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1)  # 输出为16*16*16
         self.pool = nn.MaxPool2d(2, stride=2)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)  # 输出为32*8*8
         self.fc1 = nn.Linear(32 * 8 * 8, 512)
         self.fc2 = nn.Linear(512, 10)
         self.dropout = nn.Dropout(0.2)  # 防止过拟合
+        '''
+
+        super(classifier, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
+        '''
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
 
@@ -48,30 +59,44 @@ class classifier(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
+        '''
+
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)  # 利用view函数使得conv2层输出的16*5*5维的特征图尺寸变为400大小从而方便后面的全连接层的连接
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+
         return x
 
 def train(model):
     # 定义损失函数和优化器
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
     # 训练模型
     epochs = 10
-    torch.set_num_threads(8)
     for e in range(epochs):
         train_loss = 0
 
         for data, target in trainloader:
+            #print(data.shape)
+            #print(target)
             # 梯度清零
             optimizer.zero_grad()
 
             # forward+backward
             output = model(data)
+            #print(output)
             loss = criterion(output, target)
             loss.backward()
 
             # 更新参数
             optimizer.step()
+
+            #for i in model.named_parameters():
+            #    print(i)
 
             train_loss += loss.item() * data.size(0)  # loss.item()是平均损失，平均损失*batch_size=一次训练的损失
 
@@ -90,12 +115,12 @@ if __name__ == "__main__":
     # 训练
     logging.debug("init model")
     # 在服务器上运行时使用16线程
-    num_processes = 16
+    num_processes = 1
     model = classifier()
     logging.info(model)
+
     model.share_memory()
     processes = []
-
     for rank in range(num_processes):
         p = mp.Process(target=train, args=(model,))
         p.start()
