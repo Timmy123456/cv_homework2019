@@ -105,6 +105,39 @@ def train(model):
         logging.debug(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
             ' Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
 
+        # 验证集的效果
+        class_correct = list(0. for i in range(10))
+        class_train_correct = list(0. for i in range(10))
+        class_total = list(0. for i in range(10))
+        class_train_total = list(0. for i in range(10))
+        with torch.no_grad():
+            for data in testloader:
+                images, labels = data
+                outputs = model(images)
+                _, predicted = torch.max(outputs, 1)
+                c = (predicted == labels).squeeze()
+                for i in range(4):
+                    label = labels[i]
+                    class_correct[label] += c[i].item()
+                    class_total[label] += 1
+
+            for data in trainloader:
+                images, labels = data
+                outputs = model(images)
+                _, predicted = torch.max(outputs, 1)
+                c = (predicted == labels).squeeze()
+                for i in range(4):
+                    label = labels[i]
+                    class_train_correct[label] += c[i].item()
+                    class_train_total[label] += 1
+
+        for i in range(10):
+            logging.debug('Epoch: {}', e + 1)
+            logging.debug('\t Accuracy of %5s : %2d %%' % (
+                classes[i], 100 * class_correct[i] / class_total[i]))
+            logging.debug('\t Accuracy of %5s : %2d %%' % (
+                classes[i], 100 * class_train_correct[i] / class_train_total[i]))
+
 
 if __name__ == "__main__":
     # 打开log文件
@@ -115,7 +148,7 @@ if __name__ == "__main__":
     # 训练
     logging.debug("init model")
     # 在服务器上运行时使用16线程
-    num_processes = 16
+    num_processes = 1
     model = classifier()
     logging.info(model)
 
@@ -131,22 +164,3 @@ if __name__ == "__main__":
 
     # 保存模型
     torch.save(model.state_dict(), 'cnn_model.pkl')
-
-    #验证集的效果
-    class_correct = list(0. for i in range(10))
-    class_total = list(0. for i in range(10))
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            outputs = model(images)
-            _, predicted = torch.max(outputs, 1)
-            c = (predicted == labels).squeeze()
-            for i in range(4):
-                label = labels[i]
-                class_correct[label] += c[i].item()
-                class_total[label] += 1
-
-
-    for i in range(10):
-        logging.debug('Accuracy of %5s : %2d %%' % (
-            classes[i], 100 * class_correct[i] / class_total[i]))
