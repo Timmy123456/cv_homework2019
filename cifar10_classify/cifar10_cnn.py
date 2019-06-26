@@ -104,8 +104,8 @@ def train(model):
         logging.debug(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
             ' Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
 
-        epoch_value[e + 1] = e + 1
-        loss_value[e + 1] = train_loss
+        epoch_value[e] = e + 1
+        loss_value[e] = train_loss
 
         # 验证集的效果
         class_correct = list(0. for i in range(10))
@@ -138,11 +138,11 @@ def train(model):
         for i in range(10):
             logging.debug('\t Train accuracy of %5s : %2d %%' % (
                 classes[i], 100 * class_train_correct[i] / class_train_total[i]))
-        correct += class_correct[i]
-        total += class_total[i]
+            correct += class_correct[i]
+            total += class_total[i]
 
-        train_value[e + 1] = correct / total
-        logging.debug('Train accuracy: ', train_value[e + 1])
+        train_value[e] = correct / total
+        logging.debug('Train accuracy: ', train_value[e])
 
         correct = 0.0
         total = 0.0
@@ -152,8 +152,8 @@ def train(model):
             correct += class_correct[i]
             total += class_total[i]
 
-        vali_value[e + 1] = correct / total
-        logging.debug('Train accuracy: ', vali_value[e + 1])
+        vali_value[e] = correct / total
+        logging.debug('Train accuracy: ', vali_value[e])
 
 
 
