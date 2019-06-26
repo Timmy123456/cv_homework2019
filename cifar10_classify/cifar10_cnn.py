@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.multiprocessing as mp
 import time
 import logging
+import matplotlib.pyplot as plt
 
 # 定义对数据的预处理
 transform = transforms.Compose([
@@ -26,6 +27,11 @@ testset = datasets.CIFAR10(root='./data', train=False,
 testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                          shuffle=False, num_workers=2)
 classes = ('plane' , 'car' , 'bird' , 'cat' , 'deer' , 'dog' , 'frog' , 'horse' , 'ship' , 'truck')
+
+epoch_value = list(0. for i in range(10))
+loss_value = list(0. for i in range(10))
+train_value = list(0. for i in range(10))
+vali_value = list(0. for i in range(10))
 
 # 定义cnn网络
 class classifier(nn.Module):
@@ -80,22 +86,16 @@ def train(model):
     for e in range(epochs):
         train_loss = 0
         for data, target in trainloader:
-            #print(data.shape)
-            #print(target)
             # 梯度清零
             optimizer.zero_grad()
 
             # forward+backward
             output = model(data)
-            #print(output)
             loss = criterion(output, target)
             loss.backward()
 
             # 更新参数
             optimizer.step()
-
-            #for i in model.named_parameters():
-            #    print(i)
 
             train_loss += loss.item() * data.size(0)  # loss.item()是平均损失，平均损失*batch_size=一次训练的损失
 
@@ -103,6 +103,9 @@ def train(model):
 
         logging.debug(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
             ' Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
+
+        epoch_value[e + 1] = e + 1
+        loss_value[e + 1] = train_loss
 
         # 验证集的效果
         class_correct = list(0. for i in range(10))
@@ -130,24 +133,34 @@ def train(model):
                     class_train_correct[label] += c[i].item()
                     class_train_total[label] += 1
 
+        correct = 0.0
+        total = 0.0
         for i in range(10):
             logging.debug('\t Train accuracy of %5s : %2d %%' % (
                 classes[i], 100 * class_train_correct[i] / class_train_total[i]))
+        correct += class_correct[i]
+        total += class_total[i]
 
-        logging.debug('Train accuracy: ', sum(class_train_correct) / sum(class_train_total))
+        train_value[e + 1] = correct / total
+        logging.debug('Train accuracy: ', train_value[e + 1])
 
+        correct = 0.0
+        total = 0.0
         for i in range(10):
             logging.debug('\t Validation accuracy of %5s : %2d %%' % (
                 classes[i], 100 * class_correct[i] / class_total[i]))
+            correct += class_correct[i]
+            total += class_total[i]
 
-        logging.debug('Train accuracy: ', sum(class_correct) / sum(class_total))
+        vali_value[e + 1] = correct / total
+        logging.debug('Train accuracy: ', vali_value[e + 1])
 
 
 
 if __name__ == "__main__":
     # 打开log文件
     now = time.strftime('%Y-%m-%d-%H_%M_%S', time.localtime(time.time()))
-    name = "log" + now + r".txt"
+    name = "log_" + now + r".txt"
     logging.basicConfig(filename=os.path.join(os.getcwd(), name), level=logging.DEBUG)
 
     # 训练
@@ -168,4 +181,21 @@ if __name__ == "__main__":
         p.join()
 
     # 保存模型
-    torch.save(model.state_dict(), 'cnn_model.pkl')
+    name = "cnn_" + now + r".pkl"
+    torch.save(model.state_dict(), name)
+
+    # 画图保存
+    plt.title("loss_vs_epoch", fontsize=24)
+    plt.plot(epoch_value, loss_value, linewidth=1)
+    name = "./loss_vs_epoch_" + now + r".png"
+    plt.savefig(name)
+
+    plt.title("train_accuracy_vs_epoch", fontsize=24)
+    plt.plot(epoch_value, train_value, linewidth=1)
+    name = "./train_accuracy_vs_epoch_" + now + r".png"
+    plt.savefig(name)
+
+    plt.title("validation_accuracy_vs_epoch", fontsize=24)
+    plt.plot(epoch_value, vali_value, linewidth=1)
+    name = "./validation_accuracy_vs_epoch_" + now + r".png"
+    plt.savefig(name)
