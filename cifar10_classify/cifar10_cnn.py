@@ -79,7 +79,6 @@ def train(model):
     epochs = 10
     for e in range(epochs):
         train_loss = 0
-
         for data, target in trainloader:
             #print(data.shape)
             #print(target)
@@ -132,7 +131,6 @@ def train(model):
                     class_train_total[label] += 1
 
         for i in range(10):
-            logging.debug('Epoch: {}', e + 1)
             logging.debug('\t Accuracy of %5s : %2d %%' % (
                 classes[i], 100 * class_correct[i] / class_total[i]))
             logging.debug('\t Accuracy of %5s : %2d %%' % (
