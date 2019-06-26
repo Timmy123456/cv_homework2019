@@ -131,10 +131,17 @@ def train(model):
                     class_train_total[label] += 1
 
         for i in range(10):
-            logging.debug('\t Accuracy of %5s : %2d %%' % (
-                classes[i], 100 * class_correct[i] / class_total[i]))
-            logging.debug('\t Accuracy of %5s : %2d %%' % (
+            logging.debug('\t Train accuracy of %5s : %2d %%' % (
                 classes[i], 100 * class_train_correct[i] / class_train_total[i]))
+
+        logging.debug('Train accuracy: ', sum(class_train_correct) / sum(class_train_total))
+
+        for i in range(10):
+            logging.debug('\t Validation accuracy of %5s : %2d %%' % (
+                classes[i], 100 * class_correct[i] / class_total[i]))
+
+        logging.debug('Train accuracy: ', sum(class_correct) / sum(class_total))
+
 
 
 if __name__ == "__main__":
