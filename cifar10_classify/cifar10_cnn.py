@@ -28,10 +28,10 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                          shuffle=False, num_workers=2)
 classes = ('plane' , 'car' , 'bird' , 'cat' , 'deer' , 'dog' , 'frog' , 'horse' , 'ship' , 'truck')
 
-epoch_value = list(0. for i in range(10))
-loss_value = list(0. for i in range(10))
-train_value = list(0. for i in range(10))
-vali_value = list(0. for i in range(10))
+epoch_value = list(0. for i in range(20))
+loss_value = list(0. for i in range(20))
+train_value = list(0. for i in range(20))
+vali_value = list(0. for i in range(20))
 
 # 定义cnn网络
 class classifier(nn.Module):
@@ -82,7 +82,7 @@ def train(model):
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
     # 训练模型
-    epochs = 10
+    epochs = 20
     for e in range(epochs):
         train_loss = 0
         for data, target in trainloader:
@@ -104,6 +104,8 @@ def train(model):
         logging.debug(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
             ' Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
 
+        #global epoch_value
+        #global loss_value
         epoch_value[e] = e + 1
         loss_value[e] = train_loss
 
@@ -141,8 +143,9 @@ def train(model):
             correct += class_correct[i]
             total += class_total[i]
 
+        #global train_value
         train_value[e] = correct / total
-        logging.debug('Train accuracy: ', train_value[e])
+        logging.debug('Train accuracy: %.6f' % train_value[e])
 
         correct = 0.0
         total = 0.0
@@ -152,8 +155,9 @@ def train(model):
             correct += class_correct[i]
             total += class_total[i]
 
+        #global vali_value
         vali_value[e] = correct / total
-        logging.debug('Train accuracy: ', vali_value[e])
+        logging.debug('Validation accuracy: %.6f' % vali_value[e])
 
 
 
@@ -184,18 +188,29 @@ if __name__ == "__main__":
     name = "cnn_" + now + r".pkl"
     torch.save(model.state_dict(), name)
 
+    print(epoch_value)
+    print(loss_value)
+    print(train_value)
+    print(vali_value)
+
     # 画图保存
     plt.title("loss_vs_epoch", fontsize=24)
-    plt.plot(epoch_value, loss_value, linewidth=1)
+    plt.xlabel("epoch", fontsize=10)
+    plt.ylabel("loss", fontsize=10)
+    plt.plot(epoch_value, loss_value, linewidth=5)
     name = "./loss_vs_epoch_" + now + r".png"
     plt.savefig(name)
 
     plt.title("train_accuracy_vs_epoch", fontsize=24)
-    plt.plot(epoch_value, train_value, linewidth=1)
+    plt.xlabel("epoch", fontsize=10)
+    plt.ylabel("Train Accuracy", fontsize=10)
+    plt.plot(epoch_value, train_value, linewidth=5)
     name = "./train_accuracy_vs_epoch_" + now + r".png"
     plt.savefig(name)
 
     plt.title("validation_accuracy_vs_epoch", fontsize=24)
-    plt.plot(epoch_value, vali_value, linewidth=1)
+    plt.xlabel("epoch", fontsize=10)
+    plt.ylabel("Validation Accuracy", fontsize=10)
+    plt.plot(epoch_value, vali_value, linewidth=5)
     name = "./validation_accuracy_vs_epoch_" + now + r".png"
     plt.savefig(name)
