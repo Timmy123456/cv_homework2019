@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # sklearn kmeans聚类
     # data = cv2.normalize(data, None, 0, 1, cv2.NORM_MINMAX)
-    kmeans = KMeans(n_clusters=2)
+    kmeans = KMeans(n_clusters=8)
     kmeans.fit(data)
     print("kmeans result shape:", kmeans.labels_.shape)
 
@@ -36,14 +36,39 @@ if __name__ == "__main__":
     resSeries = pd.Series(kmeans.labels_)
     cate0 = resSeries[resSeries.values == 0] #获取类别0的数据
     cate1 = resSeries[resSeries.values == 1] #获取类别1的数据
+    cate2 = resSeries[resSeries.values == 2] #获取类别2的数据
+    cate3 = resSeries[resSeries.values == 3] #获取类别3的数据
+    cate4 = resSeries[resSeries.values == 4] #获取类别4的数据
+    cate5 = resSeries[resSeries.values == 5] #获取类别5的数据
+    cate6 = resSeries[resSeries.values == 6] #获取类别6的数据
+    cate7 = resSeries[resSeries.values == 7] #获取类别7的数据
 
-    #数据量少的类别是黑猫
-    if (cate0.index.__len__() < cate1.index.__len__()):
-        blackcat = cate0.index
-    else:
-        blackcat = cate1.index
+    median = [0 for i in range(9)]
+    median[0] = np.median(cate0.index)
+    median[1] = np.median(cate1.index)
+    median[2] = np.median(cate2.index)
+    median[3] = np.median(cate3.index)
+    median[4] = np.median(cate4.index)
+    median[5] = np.median(cate5.index)
+    median[6] = np.median(cate6.index)
+    median[7] = np.median(cate7.index)
+    median[8] = kmeans.labels_.shape[0]/2
+    print(median[8])
 
-    #定义起始点
+    median_set = [0 for i in range(8)]
+    for j in range(8):
+        median_set[j] = abs(median[8] - median[j])
+    print(median_set)
+
+    index1 = median_set.index(sorted(median_set)[3])
+    index2 = median_set.index(sorted(median_set)[1])
+    print(index1, index2)
+
+    cat_part1 = resSeries[resSeries.values == index1].index
+    cat_part2 = resSeries[resSeries.values == index2].index
+    blackcat = cat_part1.append(cat_part2)
+
+    # 定义起始点
     u = np.uint16(beach.shape[1]/4.0)
     v = np.uint16(beach.shape[0]/4.0)
     print("start point:", u, v)
@@ -67,5 +92,6 @@ if __name__ == "__main__":
     cv2.waitKey(0)
     cv2.imwrite("./kmeans_result.jpg", dst)
     cv2.imwrite("./beach_cat.jpg", beach)
+    cv2.imwrite("cat_on_beach.jpg", beach)
 
 
