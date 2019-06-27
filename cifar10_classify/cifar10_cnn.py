@@ -28,6 +28,7 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                          shuffle=False, num_workers=2)
 classes = ('plane' , 'car' , 'bird' , 'cat' , 'deer' , 'dog' , 'frog' , 'horse' , 'ship' , 'truck')
 
+# 用于画图的变量
 epoch_value = list(0. for i in range(20))
 loss_value = list(0. for i in range(20))
 train_value = list(0. for i in range(20))
@@ -36,17 +37,6 @@ vali_value = list(0. for i in range(20))
 # 定义cnn网络
 class classifier(nn.Module):
     def __init__(self):
-        super().__init__()
-        '''输入为3*32*32，尺寸减半是因为池化层'''
-        '''
-        self.conv1 = nn.Conv2d(3, 16, 3, padding=1)  # 输出为16*16*16
-        self.pool = nn.MaxPool2d(2, stride=2)
-        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)  # 输出为32*8*8
-        self.fc1 = nn.Linear(32 * 8 * 8, 512)
-        self.fc2 = nn.Linear(512, 10)
-        self.dropout = nn.Dropout(0.2)  # 防止过拟合
-        '''
-
         super(classifier, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
@@ -56,17 +46,6 @@ class classifier(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        '''
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-
-        x = x.view(-1, 32 * 8 * 8)
-        x = self.dropout(x)
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
-        '''
-
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 5 * 5)  # 利用view函数使得conv2层输出的16*5*5维的特征图尺寸变为400大小从而方便后面的全连接层的连接
@@ -84,6 +63,7 @@ def train(model):
     # 训练模型
     epochs = 20
     for e in range(epochs):
+        epoch_value[e] = e + 1
         train_loss = 0
         for data, target in trainloader:
             # 梯度清零
@@ -104,9 +84,6 @@ def train(model):
         logging.debug(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) +
             ' Epoch: {} \t Training Loss:{:.6f}'.format(e + 1, train_loss))
 
-        #global epoch_value
-        #global loss_value
-        epoch_value[e] = e + 1
         loss_value[e] = train_loss
 
         # 验证集的效果
@@ -140,10 +117,9 @@ def train(model):
         for i in range(10):
             logging.debug('\t Train accuracy of %5s : %2d %%' % (
                 classes[i], 100 * class_train_correct[i] / class_train_total[i]))
-            correct += class_correct[i]
-            total += class_total[i]
+            correct += class_train_correct[i]
+            total += class_train_total[i]
 
-        #global train_value
         train_value[e] = correct / total
         logging.debug('Train accuracy: %.6f' % train_value[e])
 
@@ -169,6 +145,11 @@ if __name__ == "__main__":
 
     # 训练
     logging.debug("init model")
+    model = classifier()
+    logging.info(model)
+    train(model)
+
+    '''
     # 在服务器上运行时使用16线程
     num_processes = 1
     model = classifier()
@@ -183,6 +164,7 @@ if __name__ == "__main__":
 
     for p in processes:
         p.join()
+    '''
 
     # 保存模型
     name = "cnn_" + now + r".pkl"
@@ -200,17 +182,13 @@ if __name__ == "__main__":
     plt.plot(epoch_value, loss_value, linewidth=5)
     name = "./loss_vs_epoch_" + now + r".png"
     plt.savefig(name)
+    plt.clf()
 
-    plt.title("train_accuracy_vs_epoch", fontsize=24)
+    plt.title("accuracy_vs_epoch", fontsize=24)
     plt.xlabel("epoch", fontsize=10)
-    plt.ylabel("Train Accuracy", fontsize=10)
+    plt.ylabel("accuracy", fontsize=10)
     plt.plot(epoch_value, train_value, linewidth=5)
-    name = "./train_accuracy_vs_epoch_" + now + r".png"
-    plt.savefig(name)
-
-    plt.title("validation_accuracy_vs_epoch", fontsize=24)
-    plt.xlabel("epoch", fontsize=10)
-    plt.ylabel("Validation Accuracy", fontsize=10)
     plt.plot(epoch_value, vali_value, linewidth=5)
-    name = "./validation_accuracy_vs_epoch_" + now + r".png"
+    name = "./accuracy_vs_epoch_" + now + r".png"
     plt.savefig(name)
+    plt.clf()
